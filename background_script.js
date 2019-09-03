@@ -17,7 +17,6 @@ function initSettings() {
 }
 
 // **** Tab Functionality ****
-// Start revolving the tabs
 function startRevolving(windowId) {
 	chrome.tabs.query({ windowId: windowId, active: true }, function(tab) {
 		grabTabSettings(windowId, tab[0], function(tabSetting) {
@@ -28,7 +27,6 @@ function startRevolving(windowId) {
 	});
 }
 
-// Stop revolving the tabs
 function stopRevolving(windowId) {
 	removeTimeout(windowId);
 	chrome.tabs.query({ windowId: windowId, active: true }, function(tab) {
@@ -37,7 +35,6 @@ function stopRevolving(windowId) {
 	});
 }
 
-// Switch to the next tab.
 function switchToTab(nextTab) {
 	grabTabSettings(nextTab.windowId, nextTab, function(tabSetting) {
 		if (
