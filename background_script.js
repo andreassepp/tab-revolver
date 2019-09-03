@@ -6,14 +6,11 @@ const tabsManifest = {},
 	moverTimeOut = {},
 	listeners = {};
 
-// Runs initSettings after it checks for and migrates old settings.
-checkForAndMigrateOldSettings(function() {
-	initSettings();
-});
+initSettings();
 
 function initSettings() {
 	badgeTabs('default');
-	createBaseSettingsIfTheyDontExist();
+	loadSettings();
 	addEventListeners(function() {
 		autoStartIfEnabled(chrome.windows.WINDOW_ID_CURRENT);
 	});
@@ -21,7 +18,7 @@ function initSettings() {
 
 // **** Tab Functionality ****
 // Start revolving the tabs
-function go(windowId) {
+function startRevolving(windowId) {
 	chrome.tabs.query({ windowId: windowId, active: true }, function(tab) {
 		grabTabSettings(windowId, tab[0], function(tabSetting) {
 			setMoverTimeout(windowId, tabSetting.seconds);
@@ -32,7 +29,7 @@ function go(windowId) {
 }
 
 // Stop revolving the tabs
-function stop(windowId) {
+function stopRevolving(windowId) {
 	removeTimeout(windowId);
 	chrome.tabs.query({ windowId: windowId, active: true }, function(tab) {
 		windowStatus[windowId] = 'off';
@@ -105,7 +102,7 @@ function addEventListeners(callback) {
 			stop(windowId);
 		} else {
 			createTabsManifest(windowId, function() {
-				go(windowId);
+				startRevolving(windowId);
 			});
 		}
 	});
@@ -216,8 +213,8 @@ function removeTimeout(windowId) {
 }
 
 // **** Helpers ****
-// If a user closes a window, chrome activates each tab (presumably to close them).  This prevents errors when the onActivated listener
-// is fired on the tabs being activated to close them.
+// If a user closes a window, chrome activates each tab (presumably to close them).
+// This prevents errors when the onActivated listener is fired on the tabs being activated to close them.
 function checkIfWindowExists(windowId, callback) {
 	chrome.windows.getAll(function(windows) {
 		for (var i = 0; i < windows.length; i++) {
@@ -267,47 +264,28 @@ function grabTabSettings(windowId, tab, callback) {
 	}
 }
 
-// This will convert users old settings into the new object format and remove the old ones.
-function checkForAndMigrateOldSettings(callback) {
-	if (localStorage['revolverSettings']) callback();
-	else {
-		var oldSettings = ['seconds', 'autostart', 'inactive', 'noRefreshList', 'reload'],
-			tempSettings = {};
-		for (var i = 0; i < oldSettings.length; i++) {
-			if (localStorage[oldSettings[i]]) {
-				tempSettings[oldSettings[i]] = localStorage[oldSettings[i]];
-				delete localStorage[oldSettings[i]];
-			}
-		}
-		if (JSON.stringify(tempSettings) != '{}') {
-			localStorage['revolverSettings'] = JSON.stringify(tempSettings);
-		}
-		callback();
-	}
-}
-
-// Check if the objects exist in local storage, create them if they don't, load them if they do.
-function createBaseSettingsIfTheyDontExist() {
-	if (!localStorage['revolverSettings']) {
+function loadSettings() {
+	if (localStorage['revolverSettings']) {
+		settings = JSON.parse(localStorage['revolverSettings']);
+	} else {
+		//Set default settings
 		settings.seconds = 15;
 		settings.reload = false;
 		settings.inactive = false;
 		settings.autoStart = false;
 		localStorage['revolverSettings'] = JSON.stringify(settings);
-	} else {
-		settings = JSON.parse(localStorage['revolverSettings']);
 	}
+
 	if (localStorage['revolverAdvSettings']) {
 		advSettings = JSON.parse(localStorage['revolverAdvSettings']);
 	}
-	return true;
 }
 
 // If user has auto start enabled, well then, auto start.
 function autoStartIfEnabled(windowId) {
 	if (settings.autostart) {
 		createTabsManifest(windowId, function() {
-			go(windowId);
+			startRevolving(windowId);
 		});
 	}
 }
