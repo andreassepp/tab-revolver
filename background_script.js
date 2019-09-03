@@ -1,5 +1,5 @@
 /* global chrome */
-const tabsManifest = {},
+var tabsManifest = {},
 	settings = {},
 	advSettings = {},
 	windowStatus = {},
@@ -43,9 +43,12 @@ function switchToTab(nextTab) {
 			nextTab.url.substring(0, 19) != 'chrome://extensions'
 		) {
 			chrome.tabs.reload(nextTab.id, function() {
-				chrome.tabs.update(nextTab.id, { selected: true }, function() {
-					setMoverTimeout(tabSetting.windowId, tabSetting.seconds);
-				});
+				//wait a little bit to give the next tab time to load
+				setTimeout(() => {
+					chrome.tabs.update(nextTab.id, { selected: true }, function() {
+						setMoverTimeout(tabSetting.windowId, tabSetting.seconds);
+					});
+				}, parseInt(tabSetting.reloadBeforeSeconds) * 1000);
 			});
 		} else {
 			// Switch Tab right away
@@ -96,7 +99,7 @@ function addEventListeners(callback) {
 	chrome.browserAction.onClicked.addListener(function(tab) {
 		var windowId = tab.windowId;
 		if (windowStatus[windowId] == 'on' || windowStatus[windowId] == 'pause') {
-			stop(windowId);
+			stopRevolving(windowId);
 		} else {
 			createTabsManifest(windowId, function() {
 				startRevolving(windowId);
@@ -235,6 +238,7 @@ function assignBaseSettings(tabs, callback) {
 	for (var i = 0; i < tabs.length; i++) {
 		tabs[i].reload = tabs[i].reload || settings.reload;
 		tabs[i].seconds = tabs[i].seconds || settings.seconds;
+		tabs[i].reloadBeforeSeconds = tabs[i].reloadBeforeSeconds || settings.reloadBeforeSeconds;
 	}
 	callback();
 }
@@ -268,6 +272,7 @@ function loadSettings() {
 		//Set default settings
 		settings.seconds = 15;
 		settings.reload = false;
+		settings.reloadBeforeSeconds = 5;
 		settings.inactive = false;
 		settings.autoStart = false;
 		localStorage['revolverSettings'] = JSON.stringify(settings);
