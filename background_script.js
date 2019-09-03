@@ -1,14 +1,16 @@
 /* global chrome */
-var tabsManifest = {},
+const tabsManifest = {},
 	settings = {},
 	advSettings = {},
 	windowStatus = {},
 	moverTimeOut = {},
 	listeners = {};
+
 // Runs initSettings after it checks for and migrates old settings.
 checkForAndMigrateOldSettings(function() {
 	initSettings();
 });
+
 function initSettings() {
 	badgeTabs('default');
 	createBaseSettingsIfTheyDontExist();
@@ -16,6 +18,7 @@ function initSettings() {
 		autoStartIfEnabled(chrome.windows.WINDOW_ID_CURRENT);
 	});
 }
+
 // **** Tab Functionality ****
 // Start revolving the tabs
 function go(windowId) {
@@ -27,6 +30,7 @@ function go(windowId) {
 		});
 	});
 }
+
 // Stop revolving the tabs
 function stop(windowId) {
 	removeTimeout(windowId);
@@ -35,12 +39,13 @@ function stop(windowId) {
 		badgeTabs('', windowId);
 	});
 }
+
 // Switch to the next tab.
-function activateTab(nextTab) {
+function switchToTab(nextTab) {
 	grabTabSettings(nextTab.windowId, nextTab, function(tabSetting) {
 		if (
 			tabSetting.reload &&
-			!include(settings.noRefreshList, nextTab.url) &&
+			!arrayIncludes(settings.noRefreshList, nextTab.url) &&
 			nextTab.url.substring(0, 19) != 'chrome://extensions'
 		) {
 			chrome.tabs.reload(nextTab.id, function() {
@@ -55,6 +60,7 @@ function activateTab(nextTab) {
 		}
 	});
 }
+
 // Call moveTab if the user isn't interacting with the machine
 function moveTabIfIdle(timerWindowId, tabTimeout) {
 	if (settings.inactive) {
@@ -74,6 +80,7 @@ function moveTabIfIdle(timerWindowId, tabTimeout) {
 		moveTab(timerWindowId);
 	}
 }
+
 // Switches to next tab in the index, re-requests feed if at end of the index.
 function moveTab(timerWindowId) {
 	var nextTabIndex = 0;
@@ -84,10 +91,11 @@ function moveTab(timerWindowId) {
 			} else {
 				nextTabIndex = 0;
 			}
-			activateTab(tabs[nextTabIndex]);
+			switchToTab(tabs[nextTabIndex]);
 		});
 	});
 }
+
 // **** Event Listeners ****
 // Creates all of the event listeners to start/stop the extension and ensure badge text is up to date.
 function addEventListeners(callback) {
@@ -162,6 +170,7 @@ function addEventListeners(callback) {
 	);
 	return callback();
 }
+
 // **** Badge Status ****
 // If the window has revolver tabs enabled, make sure the badge text reflects that.
 function setBadgeStatusOnActiveWindow(tab) {
@@ -169,6 +178,7 @@ function setBadgeStatusOnActiveWindow(tab) {
 	else if (windowStatus[tab.windowId] === 'pause') badgeTabs('pause', tab.windowId);
 	else badgeTabs('', tab.windowId);
 }
+
 //Change the badge icon/background color.
 function badgeTabs(text, windowId) {
 	if (text === 'default') {
@@ -189,6 +199,7 @@ function badgeTabs(text, windowId) {
 		});
 	}
 }
+
 // **** Timeouts ***
 // Generate the timeout and assign it to moverTimeOut object.
 function setMoverTimeout(timerWindowId, seconds) {
@@ -197,11 +208,13 @@ function setMoverTimeout(timerWindowId, seconds) {
 		moveTabIfIdle(timerWindowId, seconds);
 	}, parseInt(seconds) * 1000);
 }
+
 // Remove the timeout specified.
 function removeTimeout(windowId) {
 	clearTimeout(moverTimeOut[windowId]);
 	moverTimeOut[windowId] = 'off';
 }
+
 // **** Helpers ****
 // If a user closes a window, chrome activates each tab (presumably to close them).  This prevents errors when the onActivated listener
 // is fired on the tabs being activated to close them.
@@ -215,10 +228,7 @@ function checkIfWindowExists(windowId, callback) {
 		return callback(false);
 	});
 }
-// Checks if a string exists in an array.
-function include(arr, url) {
-	return arr.indexOf(url) != -1;
-}
+
 // Returns all the tabs for the current window.
 function getAllTabsInCurrentWindow(callback) {
 	chrome.tabs.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }, function(tabs) {
@@ -234,6 +244,7 @@ function assignBaseSettings(tabs, callback) {
 	}
 	callback();
 }
+
 // If there are advanced settings for the URL, set them to the tab.
 function assignAdvancedSettings(tabs, callback) {
 	for (var y = 0; y < tabs.length; y++) {
@@ -246,6 +257,7 @@ function assignAdvancedSettings(tabs, callback) {
 	}
 	callback();
 }
+
 // Get the settings for a tab.
 function grabTabSettings(windowId, tab, callback) {
 	for (var i = 0; i < tabsManifest[windowId].length; i++) {
@@ -254,6 +266,7 @@ function grabTabSettings(windowId, tab, callback) {
 		}
 	}
 }
+
 // This will convert users old settings into the new object format and remove the old ones.
 function checkForAndMigrateOldSettings(callback) {
 	if (localStorage['revolverSettings']) callback();
@@ -272,6 +285,7 @@ function checkForAndMigrateOldSettings(callback) {
 		callback();
 	}
 }
+
 // Check if the objects exist in local storage, create them if they don't, load them if they do.
 function createBaseSettingsIfTheyDontExist() {
 	if (!localStorage['revolverSettings']) {
@@ -288,6 +302,7 @@ function createBaseSettingsIfTheyDontExist() {
 	}
 	return true;
 }
+
 // If user has auto start enabled, well then, auto start.
 function autoStartIfEnabled(windowId) {
 	if (settings.autostart) {
@@ -296,6 +311,7 @@ function autoStartIfEnabled(windowId) {
 		});
 	}
 }
+
 // Go through each tab and assign settings to them.
 function assignSettingsToTabs(tabs, callback) {
 	assignBaseSettings(tabs, function() {
@@ -304,6 +320,7 @@ function assignSettingsToTabs(tabs, callback) {
 		});
 	});
 }
+
 // Create the tabs object with settings in tabsManifest object.
 function createTabsManifest(windowId, callback) {
 	chrome.tabs.query({ windowId: windowId }, function(tabs) {
@@ -313,6 +330,7 @@ function createTabsManifest(windowId, callback) {
 		});
 	});
 }
+
 //If a user changes settings this will update them on the fly.  Called from options_script.js
 function updateSettings() {
 	settings = JSON.parse(localStorage['revolverSettings']);
@@ -326,4 +344,9 @@ function updateSettings() {
 			});
 		});
 	});
+}
+
+// Checks if a string exists in an array.
+function arrayIncludes(arr, element) {
+	return arr.indexOf(element) != -1;
 }
