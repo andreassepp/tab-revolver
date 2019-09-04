@@ -140,14 +140,14 @@ function addEventListeners(callback) {
 			delete moverTimeOut[windowId];
 			delete windowStatus[windowId];
 			delete tabsManifest[windowId];
-		}),
+		})
 	);
 	chrome.tabs.onCreated.addListener(
 		(listeners.onCreated = function(tab) {
 			createTabsManifest(tab.windowId, function() {
 				setBadgeStatusOnActiveWindow(tab);
 			});
-		}),
+		})
 	);
 	chrome.tabs.onUpdated.addListener(
 		(listeners.onUpdated = function onUpdated(tabId, changeObj, tab) {
@@ -156,28 +156,28 @@ function addEventListeners(callback) {
 				createTabsManifest(tab.windowId, function() {
 					return true;
 				});
-		}),
+		})
 	);
 	chrome.tabs.onActivated.addListener(
 		(listeners.onActivated = function(tab) {
 			checkIfWindowExists(tab.windowId, function(windowExists) {
 				if (windowExists == true) setBadgeStatusOnActiveWindow(tab);
 			});
-		}),
+		})
 	);
 	chrome.tabs.onAttached.addListener(
 		(listeners.onAttached = function(tabId, newWindow) {
 			createTabsManifest(newWindow.newWindowId, function() {
 				return true;
 			});
-		}),
+		})
 	);
 	chrome.tabs.onDetached.addListener(
 		(listeners.onDetached = function(tabId, detachWindow) {
 			createTabsManifest(detachWindow.oldWindowId, function() {
 				return true;
 			});
-		}),
+		})
 	);
 	chrome.tabs.onRemoved.addListener(
 		(listeners.onRemoved = function(tabId, removedInfo) {
@@ -186,12 +186,12 @@ function addEventListeners(callback) {
 					return true;
 				});
 			}
-		}),
+		})
 	);
 	chrome.windows.onCreated.addListener(
 		(listeners.onWindowCreated = function(window) {
 			autoStartIfEnabled(window.id);
-		}),
+		})
 	);
 	return callback();
 }
