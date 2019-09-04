@@ -8,6 +8,15 @@ var tabsManifest = {},
 
 initSettings();
 
+chrome.runtime.onConnect.addListener(function(portFrom) {
+	if (portFrom.name === 'background-content') {
+		//This is how you add listener to a port.
+		portFrom.onMessage.addListener(function(message) {
+			//Do something to this message(offsetheight and width)
+		});
+	}
+});
+
 function initSettings() {
 	badgeTabs('default');
 	loadSettings();
@@ -44,8 +53,11 @@ function switchToTab(nextTab) {
 		) {
 			chrome.tabs.reload(nextTab.id, function() {
 				//wait a little bit to give the next tab time to load
-				setTimeout(() => {
+				setTimeout(function() {
 					chrome.tabs.update(nextTab.id, { selected: true }, function() {
+						if (tabSetting.autoScroll) {
+							autoScroll(tabSetting.windowId, tabSetting.autoScrollAmount, tabSetting.autoScrollInterval);
+						}
 						setMoverTimeout(tabSetting.windowId, tabSetting.seconds);
 					});
 				}, parseInt(tabSetting.reloadBeforeSeconds) * 1000);
@@ -53,9 +65,25 @@ function switchToTab(nextTab) {
 		} else {
 			// Switch Tab right away
 			chrome.tabs.update(nextTab.id, { selected: true });
+			if (tabSetting.autoScroll) {
+				autoScroll(tabSetting.windowId, tabSetting.autoScrollAmount, tabSetting.autoScrollInterval);
+			}
 			setMoverTimeout(tabSetting.windowId, tabSetting.seconds);
 		}
 	});
+}
+
+function autoScroll(windowId, amount, interval, i = 0) {
+	if (i > 20) return;
+
+	//Need to use content scripts to make this work.... :(
+	/* chrome.windows.getCurrent(function(window) {
+		window.scrollBy(0, amount);
+	}); */
+
+	setTimeout(function() {
+		autoScroll(windowId, amount, interval, i + 1);
+	}, interval * 1000);
 }
 
 // Call moveTab if the user isn't interacting with the machine
@@ -239,6 +267,7 @@ function assignBaseSettings(tabs, callback) {
 		tabs[i].reload = tabs[i].reload || settings.reload;
 		tabs[i].seconds = tabs[i].seconds || settings.seconds;
 		tabs[i].reloadBeforeSeconds = tabs[i].reloadBeforeSeconds || settings.reloadBeforeSeconds;
+		tabs[i].autoScroll = false;
 	}
 	callback();
 }
@@ -250,6 +279,9 @@ function assignAdvancedSettings(tabs, callback) {
 			if (advSettings[i].url == tabs[y].url) {
 				tabs[y].reload = advSettings[i].reload;
 				tabs[y].seconds = advSettings[i].seconds;
+				tabs[y].autoScroll = advSettings[i].autoScroll;
+				tabs[y].autoScrollAmount = parseInt(advSettings[i].autoScrollAmount, 10);
+				tabs[y].autoScrollInterval = parseInt(advSettings[i].autoScrollInterval, 10);
 			}
 		}
 	}

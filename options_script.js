@@ -71,6 +71,9 @@ function saveAdvancedOptions(callback) {
 				url: advancedDivs[i].getElementsByClassName('url-text')[0].value,
 				reload: divInputTags[3].checked,
 				seconds: divInputTags[2].value,
+				autoScroll: divInputTags[4].checked,
+				autoScrollAmount: divInputTags[5].value,
+				autoScrollInterval: divInputTags[6].value,
 				favIconUrl: advancedDivs[i].getElementsByClassName('icon')[0].src,
 			});
 		}
@@ -100,8 +103,14 @@ function generateAdvancedSettingsHtml(tab, saved) {
 			'<img class="icon" src=' + tab.favIconUrl + '><input class="url-text" type="text" value="' + tab.url + '">',
 		secondsChunk =
 			'<p><label for="seconds">Seconds:</label> <input type="text" name="seconds" value="10" style="width:30px;">',
-		reloadChunk =
-			'<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload"></p></div>';
+		reloadChunk = '<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload">',
+		autoScrollChunk =
+			'<label class="inline" for="autoScroll">Auto Scroll:</label> <input type="checkbox" name="autoScroll">',
+		autoScrollAmountChunk =
+			'<p><label for="autoScrollAmount">Auto Scroll Amount:</label> <input type="text" name="autoScrollAmount" value="200" style="width:30px;">',
+		autoScrollIntervalChunk =
+			'<p><label for="autoScrollInterval">Auto Scroll Interval:</label> <input type="text" name="autoScrollInterval" value="1" style="width:30px;"></p></div>';
+
 	if (saved) {
 		enableHtmlChunk = '<div><input type="checkbox" class="enable" name="enable" checked>';
 		secondsChunk =
@@ -110,10 +119,29 @@ function generateAdvancedSettingsHtml(tab, saved) {
 			'" style="width:30px;">';
 		if (tab.reload) {
 			reloadChunk =
-				'<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload" checked></p></div>';
+				'<label class="inline" for="reload">Reload:</label> <input type="checkbox" name="reload" checked>';
+		}
+		if (tab.autoScroll) {
+			autoScrollChunk =
+				'<label class="inline" for="autoScroll">Auto Scroll:</label> <input type="checkbox" name="autoScroll" checked>';
+			autoScrollAmountChunk =
+				'<p><label for="autoScrollAmount">Auto Scroll Amount:</label> <input type="text" name="autoScrollAmount" value="' +
+				tab.autoScrollAmount +
+				'" style="width:30px;">';
+			autoScrollIntervalChunk =
+				'<p><label for="autoScrollInterval">Auto Scroll Interval:</label> <input type="text" name="autoScrollInterval" value="' +
+				tab.autoScrollInterval +
+				'" style="width:30px;"></p></div>';
 		}
 	}
-	advancedSettings.innerHTML += enableHtmlChunk + iconAndUrlChunk + secondsChunk + reloadChunk;
+	advancedSettings.innerHTML +=
+		enableHtmlChunk +
+		iconAndUrlChunk +
+		secondsChunk +
+		reloadChunk +
+		autoScrollChunk +
+		autoScrollAmountChunk +
+		autoScrollIntervalChunk;
 }
 
 function getCurrentTabs(callback) {
